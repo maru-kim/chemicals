@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+
+<meta charset="UTF-8">
+<title>약품 관리자</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#f5f6fa;
+margin:40px;
+}
+
+.hidden-view {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    overflow: hidden !important;
+    width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.visible-view {
+    display: block !important;
+    visibility: visible !important;
+    height: auto !important;
+    overflow: visible !important;
+    width: auto !important;
+}
+
+h1{
+margin-bottom:20px;
+}
+
+.container{
+background:white;
+padding:20px;
+border-radius:8px;
+margin-bottom:20px;
+}
+
+input{
+padding:6px;
+margin:5px;
+}
+
+button{
+padding:6px 12px;
+border:none;
+border-radius:4px;
+background:#2f80ed;
+color:white;
+cursor:pointer;
+}
+
+button:hover{
+background:#1c5fd4;
+}
+
+.delete{
+background:#e74c3c;
+}
+
+.delete:hover{
+background:#c0392b;
+}
+
+.utility{
+margin-bottom:15px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:10px;
+}
+
+th, td{
+border-bottom:1px solid #ddd;
+padding:8px;
+text-align:left;
+}
+
+th{
+background:#eef2f7;
+}
+
+td[contenteditable=true]{
+background:#fcfcfc;
+}
+
+td[contenteditable=true]:focus{
+background:#fff8dc;
+outline:none;
+}
+
+.table-container{
+    width:100%;
+    overflow-x:auto;
+}
+
+table{
+    min-width:900px;
+}
+
+input{
+    width:100%;
+    box-sizing:border-box;
+}
+
+.chemical-img{
+width:128px;
+cursor:pointer;
+border-radius:6px;
+}
+
+.image-modal{
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:#000000cc;
+justify-content:center;
+align-items:center;
+z-index:999;
+}
+
+.image-modal img{
+max-width:80%;
+max-height:80%;
+border-radius:10px;
+}
+
+.description-row{
+display:flex;
+align-items:center;
+gap: 20px;
+}
+
+.description-row textarea{
+flex:1;
+min-height:45px;
+padding: 5px;
+resize:vertical;
+}
+
+.desc-buttons{
+display:flex;
+gap: 15px;
+margin-left: 10px;
+}
+
+.photo-btn{
+background:#2f80ed;
+color:white;
+padding:6px 12px;
+border-radius:6px;
+cursor:pointer;
+font-size:14px;
+}
+
+.photo-btn:hover{
+background:#1c5fd4;
+}
+
+#scrollToTop {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    background: #2f80ed;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: none;
+    font-size: 15px;
+    z-index: 1000;
+}
+
+#scrollToTop:hover {
+    background: #1c5fd4;
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+<h1>실험실 약품 관리</h1>
+
+<h2 style="background: white; color: 000000cc; padding: 20px 25px; border-radius: 10px; margin: 20px 0; font-size: 16px; line-height: 1.8; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+    ✓ 테이블 보기/카드 보기 변경하여 편리하게 약품 정보 수정 가능<br>
+    ✓ 테이블에서 약품 클릭 시 해당 약품 카드로 스크롤 이동<br>
+    ✓ 약품 카드에서 숫자 클릭 시 해당 약품 테이블 행으로 스크롤 이동<br>
+    ✓ 카드에서 사진 클릭 시 확대하여 보기 가능<br>
+</h2>
+
+<div class="container">
+
+<h3>약품 등록</h3>
+
+<form action="/admin/add" method="POST" enctype="multipart/form-data">
+
+<input name="korean_name" placeholder="한글 이름" required>
+
+<input name="english_name" placeholder="영어 이름" required>
+
+<input name="formula" placeholder="화학식" required>
+
+<input name="location" placeholder="위치" required>
+
+<input name="description" placeholder="기타 설명">
+
+<input name="CAS_number" placeholder="CAS 번호">
+
+<input type="file" name="image">
+
+<button type="submit">등록</button>
+
+</form>
+
+
+<h3>엑셀 업로드</h3>
+
+<form action="/admin/upload_excel" method="POST" enctype="multipart/form-data">
+
+<input type="file" name="file" accept=".xlsx" required>
+
+<button type="submit">업로드</button>
+
+</form>
+
+</div>
+
+
+
+<div class="container">
+
+<div class="utility">
+
+<form action="/admin/remove_duplicates" method="GET" style="display:inline;">
+<button type="submit">중복 약품 제거</button>
+</form>
+
+<a href="/admin/logout">
+<button>로그아웃</button>
+</a>
+
+</div>
+
+
+<h3>약품 목록</h3>
+
+<div style="margin-bottom:20px; display:flex; gap:10px;">
+<button type="button" onclick="switchView('table')" style="background:#2f80ed; color:white; padding:10px 20px; border:none; border-radius:4px; cursor:pointer; font-weight:bold;" id="tableViewBtn">테이블 보기</button>
+<button type="button" onclick="switchView('card')" style="background:#95a5a6; color:white; padding:10px 20px; border:none; border-radius:4px; cursor:pointer; font-weight:bold;" id="cardViewBtn">카드 보기</button>
+</div>
+
+<!-- 테이블 뷰 -->
+<div id="tableView" style="display:block; visibility:visible;">
+<div class="table-container">
+<table style="width:100%; border-collapse:collapse; background:white;">
+<tr style="background:#eef2f7;">
+<th style="border:1px solid #ddd; padding:12px; text-align:left; font-weight:bold;">ID</th>
+<th style="border:1px solid #ddd; padding:12px; text-align:left; font-weight:bold;">한글 이름</th>
+<th style="border:1px solid #ddd; padding:12px; text-align:left; font-weight:bold;">영문 이름</th>
+<th style="border:1px solid #ddd; padding:12px; text-align:left; font-weight:bold;">화학식</th>
+<th style="border:1px solid #ddd; padding:12px; text-align:left; font-weight:bold;">위치</th>
+<th style="border:1px solid #ddd; padding:12px; text-align:left; font-weight:bold;">CAS 번호</th>
+</tr>
+{% for chemical in chemicals %}
+<tr style="cursor:pointer; transition:background 0.2s;" data-chemical-id="{{chemical.id}}" onmouseover="this.style.background='#f9f9f9'" onmouseout="this.style.background='white'" onclick="switchView('card'); document.getElementById('card-{{chemical.id}}').scrollIntoView({behavior:'smooth'});">
+<td style="border:1px solid #ddd; padding:12px;">{{loop.index}}</td>
+<td style="border:1px solid #ddd; padding:12px;">{{chemical.korean_name}}</td>
+<td style="border:1px solid #ddd; padding:12px;">{{chemical.english_name}}</td>
+<td style="border:1px solid #ddd; padding:12px;">{{chemical.formula}}</td>
+<td style="border:1px solid #ddd; padding:12px;">{{chemical.location}}</td>
+<td style="border:1px solid #ddd; padding:12px;">{{chemical.CAS_number or 'N/A'}}</td>
+</tr>
+{% endfor %}
+</table>
+</div>
+</div>
+
+<!-- 카드 뷰 -->
+<div id="cardView" style="display:block; margin-top:30px;">
+{% for chemical in chemicals %}
+
+<div id="card-{{chemical.id}}" style="background:white; padding:25px; margin-bottom:25px; border-radius:8px; border:1px solid #e0e0e0;">
+<form action="/admin/update/{{chemical.id}}" method="post" enctype="multipart/form-data" style="display:grid; grid-template-columns:300px 1fr; gap:30px;" id="form-{{chemical.id}}">
+
+<!-- 왼쪽: 사진 -->
+<div style="text-align:center;">
+<div style="font-weight:bold; font-size:18px; margin-bottom:10px; color:#2f80ed; cursor:pointer;" onclick="goToTable('{{chemical.id}}')">#{{loop.index}}</div>
+{% if chemical.image %}
+<img src="{{ url_for('static', filename='uploads/' + chemical.image) }}" style="width:100%; max-width:300px; height:auto; border-radius:8px; cursor:pointer; object-fit:contain; margin-bottom:15px;" onclick="openImage(this.src)">
+{% else %}
+<div style="width:100%; aspect-ratio:1; background:#f5f5f5; border-radius:8px; display:flex; align-items:center; justify-content:center; margin-bottom:15px;">
+<span style="color:#aaa; font-size:14px;">사진 없음</span>
+</div>
+{% endif %}
+<label class="photo-btn" style="display:inline-block;">
+사진 수정/추가
+<input type="file" name="image" style="display:none;" onchange="document.getElementById('form-{{chemical.id}}').submit();">
+</label>
+</div>
+
+<!-- 오른쪽: 정보 -->
+<div>
+<div style="margin-bottom:20px;">
+<label style="display:block; font-weight:bold; color:#333; margin-bottom:6px; font-size:14px;">한글 이름</label>
+<input name="korean_name" value="{{chemical.korean_name}}" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:4px; font-size:15px; box-sizing:border-box;">
+</div>
+
+<div style="margin-bottom:20px;">
+<label style="display:block; font-weight:bold; color:#333; margin-bottom:6px; font-size:14px;">영문 이름</label>
+<input name="english_name" value="{{chemical.english_name}}" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:4px; font-size:15px; box-sizing:border-box;">
+</div>
+
+<div style="margin-bottom:20px;">
+<label style="display:block; font-weight:bold; color:#333; margin-bottom:6px; font-size:14px;">화학식</label>
+<input name="formula" value="{{chemical.formula}}" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:4px; font-size:15px; box-sizing:border-box;">
+</div>
+
+<div style="margin-bottom:20px;">
+<label style="display:block; font-weight:bold; color:#333; margin-bottom:6px; font-size:14px;">위치</label>
+<input name="location" value="{{chemical.location}}" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:4px; font-size:15px; box-sizing:border-box;">
+</div>
+
+<div style="margin-bottom:20px;">
+<label style="display:block; font-weight:bold; color:#333; margin-bottom:6px; font-size:14px;">CAS 번호</label>
+<input name="CAS_number" value="{{chemical.CAS_number}}" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:4px; font-size:15px; box-sizing:border-box;">
+</div>
+
+<div style="margin-bottom:20px;">
+<label style="display:block; font-weight:bold; color:#333; margin-bottom:6px; font-size:14px;">설명</label>
+<textarea name="description" style="width:100%; min-height:100px; padding:10px; border:1px solid #ddd; border-radius:4px; font-size:15px; box-sizing:border-box; resize:vertical;">{{chemical.description}}</textarea>
+</div>
+
+<div style="display:flex; gap:10px; justify-content:flex-end; padding-top:15px; border-top:1px solid #eee;">
+<button type="submit" style="background:#2f80ed; color:white; padding:10px 20px; border:none; border-radius:4px; cursor:pointer; font-size:15px; font-weight:bold;">저장</button>
+<button type="submit" formaction="/admin/delete_chemical/{{chemical.id}}" formmethod="post" style="background:#e74c3c; color:white; padding:10px 20px; border:none; border-radius:4px; cursor:pointer; font-size:15px; font-weight:bold;">삭제</button>
+</div>
+</div>
+</div>
+</form>
+</div>
+
+{% endfor %}
+</div> 
+
+</div>
+
+
+<script>
+
+function switchView(view) {
+    const tableView = document.getElementById('tableView');
+    const cardView = document.getElementById('cardView');
+    const tableViewBtn = document.getElementById('tableViewBtn');
+    const cardViewBtn = document.getElementById('cardViewBtn');
+    
+    if (view === 'table') {
+        tableView.scrollIntoView({behavior:'smooth'});
+        tableViewBtn.style.background = '#2f80ed';
+        cardViewBtn.style.background = '#95a5a6';
+    } else {
+        cardView.scrollIntoView({behavior:'smooth'});
+        tableViewBtn.style.background = '#95a5a6';
+        cardViewBtn.style.background = '#2f80ed';
+    }
+}
+
+function goToTable(chemicalId) {
+    switchView('table');
+    const row = document.querySelector('tr[data-chemical-id="' + chemicalId + '"]');
+    if (row) {
+        row.scrollIntoView({behavior:'smooth'});
+    }
+}
+
+function updateChemical(id, field, value){
+
+fetch("/admin/update/" + id, {
+
+method: "POST",
+
+headers: {
+"Content-Type": "application/x-www-form-urlencoded"
+},
+
+body: field + "=" + encodeURIComponent(value)
+
+}).then(()=>{
+
+location.reload()
+
+})
+
+}
+
+</script>
+
+<script>
+    // 페이지 떠날 때 스크롤 위치 저장
+    window.addEventListener("beforeunload", function () {
+        localStorage.setItem("scrollPosition", window.scrollY);
+    });
+
+    // 페이지 로드 후 스크롤 위치 복원
+    window.addEventListener("load", function () {
+        const scrollPosition = localStorage.getItem("scrollPosition");
+        if (scrollPosition !== null) {
+            window.scrollTo(0, parseInt(scrollPosition));
+        }
+    });
+</script>
+
+<div id="imageModal" class="image-modal" onclick="closeImage()">
+<img id="modalImage">
+</div>
+
+<button id="scrollToTop">TOP</button>
+
+<script>
+
+function openImage(src){
+    document.getElementById("modalImage").src = src;
+    document.getElementById("imageModal").style.display = "flex";
+}
+
+function closeImage(){
+    document.getElementById("imageModal").style.display = "none";
+}
+
+window.addEventListener('scroll', function() {
+    var button = document.getElementById('scrollToTop');
+    if (window.pageYOffset > 100) {
+        button.style.display = 'block';
+    } else {
+        button.style.display = 'none';
+    }
+});
+
+document.getElementById('scrollToTop').addEventListener('click', function() {
+    window.scrollTo({top: 0, behavior: 'smooth'});
+});
+
+</script>
+
+</body>
+</html>

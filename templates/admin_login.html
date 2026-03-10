@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>관리자 로그인</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f6fa;
+            margin: 40px;
+        }
+        h2 {
+            color: #2f80ed;
+            margin-bottom: 30px;
+        }
+        form {
+            margin-bottom: 30px;
+        }
+        input[type="password"] {
+            padding: 10px;
+            width: 300px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px 20px;
+            background: #2f80ed;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #1c5fd4;
+        }
+        a {
+            color: #2f80ed;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+<h2>🔑 관리자 로그인</h2>
+
+<form method="POST">
+    <input type="password" name="password" placeholder="비밀번호" required>
+    <button type="submit">로그인</button>
+</form>
+
+<br>
+<a href="{{ url_for('index') }}">검색 화면으로</a>
+
+</body>
+</html>

@@ -1,0 +1,10 @@
+<h2>약품 수정</h2>
+
+<form method="POST">
+    <input type="text" name="korean_name" value="{{ chemical.korean_name }}" required>
+    <input type="text" name="english_name" value="{{ chemical.english_name }}" required>
+    <input type="text" name="location" value="{{ chemical.location }}" required>
+    <button type="submit">수정 완료</button>
+</form>
+
+<a href="{{ url_for('admin_dashboard') }}">돌아가기</a>
